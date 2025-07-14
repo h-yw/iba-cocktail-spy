@@ -13,8 +13,8 @@ const crawler = new PuppeteerCrawler({
     // proxyConfiguration: new ProxyConfiguration({ proxyUrls: ['...'] }),
     requestHandler: router,
     // Comment this option to scrape the full website.
-    maxRequestsPerCrawl: 2,
-    maxConcurrency:1,
+    // maxRequestsPerCrawl: 2,
+    maxConcurrency:2,
     preNavigationHooks:[
         async({page})=>{
             // BOLD: --- 添加 Cookie ---

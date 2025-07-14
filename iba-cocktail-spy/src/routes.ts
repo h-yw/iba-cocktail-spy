@@ -1,7 +1,7 @@
-import { createPuppeteerRouter, PuppeteerCrawlingContext } from 'crawlee';
+import { createPuppeteerRouter } from 'crawlee';
 import path from 'path';
 
-export const router = createPuppeteerRouter<PuppeteerCrawlingContext>();
+export const router = createPuppeteerRouter();
 
 export const allCocktails:any[] = []; // 全局缓存所有页面数据
 export const OUTPUT_FILE = path.resolve('data/cocktails-full.json'); // 输出文件路径
@@ -96,20 +96,21 @@ router.addHandler('list', async ({ request,enqueueLinks, page, log  }) => {
 });
 
 // 详情
-router.addHandler('detail',async({page,request,log})=>{
+router.addHandler('detail',async({page,request,log,pushData})=>{
     try{
         const { partialData } = request.userData;
         await handleAgeGate(page, log);
 
         log.info(`正在处理详情页 (XPath): ${partialData.title}`);
 
-        await page.waitForSelector('#page');
+        await page.waitForSelector('#content > div > div.elementor');
         
         const detailData = await page.evaluate(() => {
-            // // JS 写法，不要加类型
-            // const getSingleNodeValue = (path, contextNode = document, attribute) => {
+            // @ts-ignore
+            // throw new Error(JSON.stringify(document.evaluate(path, contextNode, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null)))
+            // const getSingleNodeValue = (path, contextNode, attribute) => {
             //     const result = document.evaluate(path, contextNode, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-            //     const node = result.singleNodeValue;
+            //     const node = result.iterateNext();
             //     if (!node) return null;
 
             //     if (attribute) {
@@ -130,6 +131,19 @@ router.addHandler('detail',async({page,request,log})=>{
             //     }
             //     return results;
             // };
+            // const  getSingleNodeValue =(selector, attribute)=>{
+            //     const node =document.querySelector(selector)
+            //     if(!node) return ''
+            //     if(attribute){
+            //         return node.getAttribute(attribute)
+            //     }
+            //     return node.textContent?.trim() || null;
+            // }
+            // const getMultipleNodeValues =(selector)=>{
+            //     const nodes =document.querySelectorAll(selector)
+            //     if(!node) return []
+            //     return  [...nodes].map(item=>item.textContent?.trim()||null)
+            // }
 
             // // XPath 路径
             const imgXpath = '//*[@id="content"]/div/div[1]/section[2]/div/div[1]/div/div/div/div/div/div/img';
@@ -140,14 +154,20 @@ router.addHandler('detail',async({page,request,log})=>{
 
             // const img = getSingleNodeValue(imgXpath, document, 'src');
             //    @ts-ignore
-            const img = window.$x(imgXpath)[0].src
+            const img =document.querySelector('#content > div > div.elementor > section.elementor-section.elementor-top-section.elementor-element.elementor-section-stretched.elementor-section-boxed.elementor-section-height-default.elementor-section-height-default > div > div.elementor-column.elementor-col-50.elementor-top-column.elementor-element > div > div > div > div > div > div > img')?.src //document.evaluate(imgXpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null)
+            // const imgNode =  imgXpathRes.iterateNext();
             // const video = getSingleNodeValue(videoXpath, document, 'href');
+            const video = document.querySelector('#content > div > div.elementor> section.elementor-section.elementor-top-section.elementor-element.elementor-section-stretched.elementor-section-boxed.elementor-section-height-default.elementor-section-height-default > div > div.elementor-column.elementor-col-50.elementor-top-column.elementor-element > div > section > div > div > div > div.elementor-element.elementor-widget.elementor-widget-shortcode > div > div > a')?.href
             // const ingredients = getMultipleNodeValues(ingredientsXpath);
+            const ingredients = [...(document.querySelectorAll('#content > div > div.elementor > section.elementor-section.elementor-top-section.elementor-element.elementor-section-stretched.elementor-section-boxed.elementor-section-height-default.elementor-section-height-default > div > div.elementor-column.elementor-col-50.elementor-top-column.elementor-element > div > div.elementor-element.elementor-widget.elementor-widget-shortcode > div > div > ul > li')??[])].map(item=>item.textContent?.trim()||null)
             // const preparation = getMultipleNodeValues(preparationXpath);
+            const preparation = [...(document.querySelectorAll('#content > div > div.elementor > section.elementor-section.elementor-top-section.elementor-element.elementor-section-stretched.elementor-section-boxed.elementor-section-height-default.elementor-section-height-default > div > div.elementor-column.elementor-col-50.elementor-top-column.elementor-element> div > div.elementor-element.elementor-widget.elementor-widget-shortcode > div > div > p')??[])].map(item=>item.textContent?.trim()||null)
             // const decorated = getMultipleNodeValues(decoratedXpath);
-
-            // return { img, video, ingredients, preparation, decorated };
-            return {img}
+            const decorated = [...(document.querySelectorAll('#content > div > div.elementor > section.elementor-section.elementor-top-section.elementor-element.elementor-section-stretched.elementor-section-boxed.elementor-section-height-default.elementor-section-height-default > div > div.elementor-column.elementor-col-50.elementor-top-column.elementor-element> div > div.elementor-element.elementor-widget.elementor-widget-shortcode > div > div > p')??[])].map(item=>item.textContent?.trim()||null)
+            return { img, video, ingredients,
+                 preparation, decorated 
+                };
+            // return {img,video}
         });
 
 
@@ -159,6 +179,7 @@ router.addHandler('detail',async({page,request,log})=>{
         log.info(`partialData====>${partialData}`,)
         log.info(`detail======>${detailData}`,)
         allCocktails.push(fullData);
+        pushData(fullData)
     } catch (error: any) {
         log.error(`处理详情页 ${request.url} 失败: ${error.stack}`);
         // 可选：将失败的请求重新加入队列进行重试
