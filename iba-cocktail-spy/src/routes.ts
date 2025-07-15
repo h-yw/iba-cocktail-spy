@@ -4,7 +4,7 @@ import path from 'path';
 export const router = createPuppeteerRouter();
 
 export const allCocktails:any[] = []; // 全局缓存所有页面数据
-export const OUTPUT_FILE = path.resolve('data/cocktails-full.json'); // 输出文件路径
+export const OUTPUT_FILE = path.resolve('data/cocktails-full-2.json'); // 输出文件路径
 
 /**
  * 辅助函数：处理年龄验证弹窗
@@ -161,9 +161,9 @@ router.addHandler('detail',async({page,request,log,pushData})=>{
             // const ingredients = getMultipleNodeValues(ingredientsXpath);
             const ingredients = [...(document.querySelectorAll('#content > div > div.elementor > section.elementor-section.elementor-top-section.elementor-element.elementor-section-stretched.elementor-section-boxed.elementor-section-height-default.elementor-section-height-default > div > div.elementor-column.elementor-col-50.elementor-top-column.elementor-element > div > div.elementor-element.elementor-widget.elementor-widget-shortcode > div > div > ul > li')??[])].map(item=>item.textContent?.trim()||null)
             // const preparation = getMultipleNodeValues(preparationXpath);
-            const preparation = [...(document.querySelectorAll('#content > div > div.elementor > section.elementor-section.elementor-top-section.elementor-element.elementor-section-stretched.elementor-section-boxed.elementor-section-height-default.elementor-section-height-default > div > div.elementor-column.elementor-col-50.elementor-top-column.elementor-element> div > div.elementor-element.elementor-widget.elementor-widget-shortcode > div > div > p')??[])].map(item=>item.textContent?.trim()||null)
+            const preparation = [...(document.querySelectorAll('#content > div > div.elementor > section.elementor-section.elementor-top-section.elementor-element.elementor-section-stretched.elementor-section-boxed.elementor-section-height-default.elementor-section-height-default > div > div.elementor-column.elementor-col-50.elementor-top-column.elementor-element> div.elementor-element-populated > div.elementor-element.elementor-widget.elementor-widget-shortcode')[2].querySelectorAll('div > div > p')??[])].map(item=>item.textContent?.trim()||null)
             // const decorated = getMultipleNodeValues(decoratedXpath);
-            const decorated = [...(document.querySelectorAll('#content > div > div.elementor > section.elementor-section.elementor-top-section.elementor-element.elementor-section-stretched.elementor-section-boxed.elementor-section-height-default.elementor-section-height-default > div > div.elementor-column.elementor-col-50.elementor-top-column.elementor-element> div > div.elementor-element.elementor-widget.elementor-widget-shortcode > div > div > p')??[])].map(item=>item.textContent?.trim()||null)
+            const decorated =   [...(document.querySelectorAll('#content > div > div.elementor > section.elementor-section.elementor-top-section.elementor-element.elementor-section-stretched.elementor-section-boxed.elementor-section-height-default.elementor-section-height-default > div > div.elementor-column.elementor-col-50.elementor-top-column.elementor-element> div.elementor-element-populated > div.elementor-element.elementor-widget.elementor-widget-shortcode')[3].querySelectorAll('div > div > p')??[])].map(item=>item.textContent?.trim()||null)
             return { img, video, ingredients,
                  preparation, decorated 
                 };
