@@ -4,9 +4,11 @@ import fs from 'fs/promises'; // 使用 promise 版本的 fs API
 
 import { allCocktails, OUTPUT_FILE, router } from './routes.js';
 
+//'https://iba-world.com/cocktails/all-cocktails/',
+// https://imbibemagazine.com/category/recipes/page/2/
 const startUrls = [{
-    url:'https://iba-world.com/cocktails/all-cocktails/',
-    label:'list'
+    url:'https://imbibemagazine.com/category/cocktails-spirits-recipes/',
+    label:'imbibemagazine-page'
 }];
 
 const crawler = new PuppeteerCrawler({
@@ -43,6 +45,7 @@ const crawler = new PuppeteerCrawler({
 
 
 await crawler.run(startUrls)
+await fs.appendFile(OUTPUT_FILE, '\n]\n', 'utf-8');
 
-await fs.writeFile(OUTPUT_FILE, JSON.stringify(allCocktails, null, 2), 'utf-8');
-log.info(`✅ 所有数据已写入 ${OUTPUT_FILE}，共 ${allCocktails.length} 条`);
+// await fs.writeFile(OUTPUT_FILE, JSON.stringify(allCocktails, null, 2), 'utf-8');
+// log.info(`✅ 所有数据已写入 ${OUTPUT_FILE}，共 ${allCocktails.length} 条`);

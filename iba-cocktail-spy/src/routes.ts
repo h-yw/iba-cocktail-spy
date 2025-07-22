@@ -1,11 +1,13 @@
 import { createPuppeteerRouter } from 'crawlee';
 import path from 'path';
+import fs from 'fs/promises'; // 使用 promise 版本的 fs API
 
 export const router = createPuppeteerRouter();
 
 export const allCocktails:any[] = []; // 全局缓存所有页面数据
-export const OUTPUT_FILE = path.resolve('data/cocktails-full-2.json'); // 输出文件路径
-
+export const OUTPUT_FILE = path.resolve('data/imbibemagazine.json'); // 输出文件路径
+// 记录是否是第一次写入
+let isFirstWrite = true;
 /**
  * 辅助函数：处理年龄验证弹窗
  * @param page - Puppeteer 的 Page 对象
@@ -186,4 +188,86 @@ router.addHandler('detail',async({page,request,log,pushData})=>{
         // await request.retry();
     }
 
+})
+
+// imbibemagazine
+router.addHandler('imbibemagazine-page',async({page,request,enqueueLinks,log,pushData})=>{
+    try{
+
+          // 如果是第一次写入，加上数组的开头
+        if (isFirstWrite) {
+            await fs.writeFile(OUTPUT_FILE, '[\n', 'utf-8');
+            isFirstWrite = false;
+        }
+        await page.waitForSelector('#primary')
+        const list= (await page.$$('#card-slide-0-0'))
+        
+        for (const item of list) {
+            const res = await item.evaluate((el) => {
+                return {
+                    link: (el as HTMLAnchorElement)?.href,
+                    imgs: (el.querySelector('.card-slide__image') as HTMLImageElement).dataset.srcset?.split(',').map(item=>item.split(' ')),
+                    title:el.querySelector('h3')?.textContent?.trim(),
+                    desc: el.querySelector('main')?.textContent?.trim()
+                }
+            });
+            console.log(JSON.stringify(res,null,2))
+           await fs.appendFile(OUTPUT_FILE, JSON.stringify(res,null,2)+',' + '\n', 'utf-8');
+
+        //    pushData(res)
+        }
+        const nextHref = await page.$eval('.next.page-numbers', (el:any) => el.href);
+        if(nextHref){
+        await enqueueLinks({
+            urls:[nextHref],
+            label:'imbibemagazine-page',
+        })
+        log.info(`已加入下一页: ${nextHref}`);
+        }
+    }catch(err){
+       console.log("err======>",err)
+    }
+})
+
+// imbibemagazine recipe
+router.addHandler('imbibemagazine-page',async({page,request,enqueueLinks,log,pushData})=>{
+    try{
+
+          // 如果是第一次写入，加上数组的开头
+        if (isFirstWrite) {
+            await fs.writeFile(OUTPUT_FILE, '[\n', 'utf-8');
+            isFirstWrite = false;
+        }
+        await page.waitForSelector('#primary')
+        await page.$$eval('#primary',items=>{
+            const doc= items[0]
+            const title = doc.querySelector('#recipe__title')?.textContent?.trim()
+            const author = [...(doc.querySelectorAll('.recipe__author .author')||[])].map(item=>item.textContent?.trim())
+            const photoAuthor =doc.querySelector('.post-info__second .recipe__image-credit .body')?.textContent?.trim()
+            const takeDate = doc.querySelector('.post-info__second>.author')?.textContent?.trim()
+            const img = (doc.querySelector('#featured-image>img')as HTMLImageElement).dataset.srcset?.split(',').map(item=>item.split(' '))
+            const desc = doc.querySelector('.recipe__main-inner>p')?.textContent?.trim()
+            const ingredients = [...(doc.querySelectorAll('.ingredients__ingredients>.ingredients__item')||[])].map(item=>item?.textContent?.trim())
+            const tools =[...(doc.querySelectorAll('.ingredients__tools> li:nth-child(1)')||[])].map(item=>item?.textContent?.trim())
+             const glass =[...(doc.querySelectorAll('.ingredients__tools> li:nth-child(2)')||[])].map(item=>item?.textContent?.trim())
+              const garnish =[...(doc.querySelectorAll('.ingredients__tools> li:nth-child(3)')||[])].map(item=>item?.textContent?.trim())
+        })
+        
+        // for (const item of list) {
+        //     const res = await item.evaluate((el) => {
+        //         return {
+        //             link: (el as HTMLAnchorElement)?.href,
+        //             imgs: (el.querySelector('.card-slide__image') as HTMLImageElement).dataset.srcset?.split(',').map(item=>item.split(' ')),
+        //             title:el.querySelector('h3')?.textContent?.trim(),
+        //             desc: el.querySelector('main')?.textContent?.trim()
+        //         }
+        //     });
+        //     console.log(JSON.stringify(res,null,2))
+        //    await fs.appendFile(OUTPUT_FILE, JSON.stringify(res,null,2)+',' + '\n', 'utf-8');
+
+        // //    pushData(res)
+        // }
+    }catch(err){
+       console.log("err======>",err)
+    }
 })
